@@ -1,12 +1,12 @@
 # 简介
 
-FreeMarker-Perl 是一款**模板引擎**：即一种基于模板和要改变的数据，并用来生成输出文本(配置文件，源代码等)的工具
+FreeMarker-Perl 是一款**模板引擎**：即一种基于模板和要改变的数据，用来生成输出文本(配置文件，源代码等)的工具。
 
-该模板引擎主要用于运维部署脚本中，把配置模板文件输出为实际的配置文件，供部署时使用
+该模板引擎主要用于运维部署脚本中，把配置模板文件输出为实际的配置文件，供部署时使用。
 
-该框架是参考Java平台上已有的FreeMarker模板引擎，使用Perl语言实现基本的功能，centos-7服务器默认自带Perl
+该框架是参考Java平台上已有的FreeMarker模板引擎，使用Perl语言实现基本的功能，CentOS-7服务器默认自带Perl。
 
-基本的功能包括：变量替换，条件判断，循环
+基本的功能包括：变量替换，条件判断，循环。
 
 # 背景
 
@@ -22,7 +22,7 @@ FreeMarker-Perl 是一款**模板引擎**：即一种基于模板和要改变的
 
 # 基本使用
 
-先git-clone源码，得到`freemarker.pl`，然后在`CentOS-7.6服务器`或者`本地Windows电脑的GitBash`上执行如下命令：
+> 先git-clone源码，得到`freemarker.pl`，然后在`CentOS-7.6服务器`或者`本地Windows电脑的GitBash`上执行如下命令：
 
 ```shell
 chmod +x freemarker.pl
@@ -39,12 +39,13 @@ cat >freemarker-test.txt <<'EOF'
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合
-# 其中数组变量名是以[]作为后缀，[]内可以指定分隔符，默认分隔符为逗号
+#   说明1：if指令的变量，只有值为"true"的情况下，if指令才会判断为真，其他任何值，都会视为false
+#   说明2：数组变量名是以[]作为后缀，[]内可以指定分隔符，默认分隔符为逗号
 cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true \
   hobbies[]='run,swim' job="software engineer" numbers['|']='3|6|9'
 ```
 
-> 上面脚本的输出内容如下：
+> 上面命令执行后，模板转换后的输出内容如下：
 
 ```
 1. My name is wrj.
