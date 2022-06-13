@@ -27,7 +27,8 @@ sub main {
 
     # TODO 6.处理内置函数
     # TODO   len：用于得到数组的长度
-    # TODO   expr：表达式运算
+    # TODO   isFirst()：当前是否为第一个元素，用于for指令里面的if指令中
+    # TODO   isLast()：当前是否为最后一个元素，用于for指令里面的if指令中
     # convert_func();
 
     print $yamlText;
@@ -91,7 +92,7 @@ sub convert_variable {
 
 sub convert_if {
     my ($yamlText, %variables) = @_;
-    while ($yamlText =~ /<#if ([!]?)([a-zA-Z0-9]+?)>((.|\n)*?)<\/#if>/) {
+    while ($yamlText =~ /<#if ([!]?)([a-zA-Z0-9_-]+?)>((.|\n)*?)<\/#if>/) {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
         my $matchString = $&;
@@ -133,15 +134,15 @@ sub convert_if {
 sub convert_for {
     my ($yamlText, %variables) = @_;
     # (?<=\n)是零宽断言，实现把<#for>之前的空格和换行符去掉
-    while ($yamlText =~ /((?<=\n)[ ]*)?<#for ([a-zA-Z0-9_]+?[ ]*,[ ]*)?([a-zA-Z0-9_]+?) in ([a-zA-Z0-9_]+?)>[\n]?((.|\n)*?)[ ]*<\/#for>[ ]*[\n]?/) {
+    while ($yamlText =~ /((?<=\n)[ ]*)?<#for (([a-zA-Z0-9_-]+?)[ ]*,[ ]*)?([a-zA-Z0-9_-]+?) in ([a-zA-Z0-9_-]+?)>[\n]?((.|\n)*?)((?<=\n)[ ]*)?<\/#for>[ ]*[\n]?/) {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
         my $matchString = $&;
 
-        my $indexVarName = $2;    # 数组索引变量名，从0开始
-        my $dataVarName = $3;     # 数组元素的变量名
-        my $dataListVarName = $4; # 数组列表的变量名
-        my $content = $5;         # 被for标签包裹的内容
+        my $indexVarName = $3;    # 数组索引变量名，从0开始
+        my $dataVarName = $4;     # 数组元素的变量名
+        my $dataListVarName = $5; # 数组列表的变量名
+        my $content = $6;         # 被for标签包裹的内容
 
         # 判断数组列表的变量名是否有定义
         if (!exists($variables{$dataListVarName})) {
@@ -149,11 +150,9 @@ sub convert_for {
             exit(1);
         }
 
-        # my $result = "$indexVarName, $dataVarName, $dataListVarName, content='$content'";
         my $result = "";
         my @dataList = @{$variables{$dataListVarName}};
         for (my $i = 0; $i < @dataList; $i++) {
-            # $result = "$result\n $i - $dataList[$i]";
             my $temp = "$content";
             # 必须做一下判断，否则报错：Use of uninitialized value $indexVarName
             if (defined($indexVarName) && $indexVarName) {
