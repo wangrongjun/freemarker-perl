@@ -22,8 +22,10 @@ FreeMarker-Perl 是一款**模板引擎**：即一种基于模板和要改变的
 
 # 基本使用
 
+先git-clone源码，得到`freemarker.pl`，然后在centos:7.6或者本地电脑的GitBash上执行如下命令：
+
 ```shell
-chmod +x ./freemarker.pl
+chmod +x freemarker.pl
 
 cat >freemarker-test.txt <<'EOF'
 1. My name is ${name}.
