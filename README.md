@@ -35,7 +35,7 @@ cat >freemarker-test.txt <<'EOF'
    <#for i, hobby in hobbies>
    - ${i}: ${hobby}
    </#for>
-5. My numbers is <#for i, number in numbers>${number},</#for>
+5. My numbers is <#for number in numbers>${number},</#for>
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合

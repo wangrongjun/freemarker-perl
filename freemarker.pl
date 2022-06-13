@@ -2,7 +2,7 @@
 use strict;
 use warnings FATAL => 'all';
 
-# 注意：需要先执行：chmod u+x demo.perl，否则会报错没权限执行脚本
+# 注意：需要先执行：chmod u+x demo.pl，否则会报错没权限执行脚本
 
 main();
 
@@ -25,7 +25,7 @@ sub main {
     # 5.处理变量 TODO 支持表达式运算
     $yamlText = convert_variable($yamlText, %variables);
 
-    # TODO 5.处理内置函数，
+    # TODO 6.处理内置函数
     # TODO   len：用于得到数组的长度
     # TODO   expr：表达式运算
     # convert_func();
@@ -133,7 +133,7 @@ sub convert_if {
 sub convert_for {
     my ($yamlText, %variables) = @_;
     # (?<=\n)是零宽断言，实现把<#for>之前的空格和换行符去掉
-    while ($yamlText =~ /((?<=\n)[ ]*)?<#for ([a-zA-Z0-9_]+?)?[,]?[ ]?([a-zA-Z0-9_]+?) in (.+?)>[\n]?((.|\n)*?)[ ]*<\/#for>[ ]*[\n]?/) {
+    while ($yamlText =~ /((?<=\n)[ ]*)?<#for ([a-zA-Z0-9_]+?[ ]*,[ ]*)?([a-zA-Z0-9_]+?) in ([a-zA-Z0-9_]+?)>[\n]?((.|\n)*?)[ ]*<\/#for>[ ]*[\n]?/) {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
         my $matchString = $&;
@@ -155,7 +155,10 @@ sub convert_for {
         for (my $i = 0; $i < @dataList; $i++) {
             # $result = "$result\n $i - $dataList[$i]";
             my $temp = "$content";
-            $temp =~ s/\$\{$indexVarName\}/$i/g;
+            # 必须做一下判断，否则报错：Use of uninitialized value $indexVarName
+            if (defined($indexVarName) && $indexVarName) {
+                $temp =~ s/\$\{$indexVarName\}/$i/g;
+            }
             $temp =~ s/\$\{$dataVarName\}/$dataList[$i]/g;
             $result = "$result$temp";
         }
