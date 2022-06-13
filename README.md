@@ -38,7 +38,10 @@ cat >freemarker-test.txt <<'EOF'
 5. My numbers is <#for i, number in numbers>${number},</#for>
 EOF
 
-cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true hobbies[]='run,swim' job="software engineer" numbers['|']='3|6|9'
+# 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合
+# 其中数组变量名是以[]作为后缀，[]内可以指定分隔符，默认分隔符为逗号
+cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true \
+  hobbies[]='run,swim' job="software engineer" numbers['|']='3|6|9'
 ```
 
 > 上面脚本的输出内容如下：
@@ -52,3 +55,9 @@ cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true hobbies[]='
    - 1: swim
 5. My numbers is 3,6,9,
 ```
+
+# 后续支持的功能
+
+1. `${}`和`<#if>`支持表达式运算，比如`${i+1}`和`<#if a==b+c>`
+2. 实现常用的内置函数，比如实现`len(array)`来支持获取数组变量的长度
+3. 允许通过指定yaml/json文件来提供变量集合

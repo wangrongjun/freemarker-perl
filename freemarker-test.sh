@@ -1,3 +1,5 @@
+chmod +x freemarker.pl
+
 cat >freemarker-test.txt <<'EOF'
 1. My name is ${name}.
 2. My job is ${job}.
@@ -8,5 +10,10 @@ cat >freemarker-test.txt <<'EOF'
    </#for>
 5. My numbers is <#for i, number in numbers>${number},</#for>
 EOF
-cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true hobbies[]='run,swim' job="software engineer" numbers['|']='3|6|9'
+
+# 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合
+# 其中数组变量名是以[]作为后缀，[]内可以指定分隔符，默认分隔符为逗号
+cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true \
+  hobbies[]='run,swim' job="software engineer" numbers['|']='3|6|9'
+
 rm -f freemarker-test.txt

@@ -19,15 +19,15 @@ sub main {
     # 3.处理for（需要同时处理for里面的if，内置函数和变量，因此必须把for循环的处理放在第一步）
     $yamlText = convert_for($yamlText, %variables);
 
-    # 4.处理if TODO 条件语句支持四则运算
+    # 4.处理if TODO 条件语句支持表达式运算
     $yamlText = convert_if($yamlText, %variables);
 
-    # 5.处理变量 TODO 支持四则运算
+    # 5.处理变量 TODO 支持表达式运算
     $yamlText = convert_variable($yamlText, %variables);
 
     # TODO 5.处理内置函数，
     # TODO   len：用于得到数组的长度
-    # TODO   expr：四则运算
+    # TODO   expr：表达式运算
     # convert_func();
 
     print $yamlText;
