@@ -102,17 +102,28 @@ sub convert_if {
         my $key = $2;
         my $content = $3;
         # print("not=$not, key=$key, content=$content\n");
-        my $ifFlag = 1;
+        my $ifFlag = "true";
         if ($key eq "true" || $key eq "false") {
-            $ifFlag = $key eq "true" ? 1 : 0;
+            $ifFlag = $key;
         }
         elsif (!exists($variables{$key})) {
             print("Error: variable '$key' not defined");
             exit(1);
         }
-        $ifFlag = $not eq "!" ? !$ifFlag : $ifFlag;
-        my $matchStringNew = $ifFlag ? $content : "";
+        else {
+            $ifFlag = $variables{$key};
+        }
+        # 处理非逻辑
+        if ($not eq "!") {
+            if ($ifFlag eq "true") {
+                $ifFlag = "false";
+            }
+            else {
+                $ifFlag = "true";
+            }
+        }
 
+        my $matchStringNew = $ifFlag eq "true" ? $content : "";
         $yamlText = join(
             '',
             substr($yamlText, 0, $matchStringStart),
@@ -175,7 +186,7 @@ sub convert_func {
     my ($yamlText, %variables) = @_;
 
     # 内置函数join：把数组组装成一个字符串，可以自定义分隔符
-    #             例子：$join(es-servers, ',')
+    # 例子：$join(es-servers, ',')
     while ($yamlText =~ /\$join\(([a-zA-Z0-9_-]+?)[ ]*,[ ]*'(.+?)'[ ]*\)/) {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
@@ -188,7 +199,6 @@ sub convert_func {
             exit(1);
         }
         my $matchStringNew = join($separator, @{$variables{$arrayVarName}});
-        print("matchStringNew='$matchStringNew'\n");
         $yamlText = join(
             '',
             substr($yamlText, 0, $matchStringStart),

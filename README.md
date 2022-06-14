@@ -34,21 +34,27 @@ chmod +x freemarker.pl
 cat >freemarker-test.txt <<'EOF'
 1. My name is ${name}
 2. My job is ${job}
-3. I <#if marry>have</#if><#if !marry>don't have</#if> a wife, I'm <#if marry>not</#if> a single dog
-4. My hobbies is
+3. I <#if marry>have</#if><#if !marry>don't have</#if> a wife, I'm <#if marry>not </#if>a single dog
+4. I <#if !single>have</#if><#if single>don't have</#if> a wife, I'm <#if !single>not </#if>a single dog
+5. My hobbies is
    <#for i, hobby in hobbies>
    - ${i}: ${hobby}
    </#for>
-5. My es servers is [<#for es-server in es-servers>"${es-server}", </#for>]
-6. My age is ${age}
+6. My es servers is [<#for es-server in es-servers><#if !$isFirst()>, </#if>"${es-server}"</#for>]
+7. My es servers is [<#for es-server in es-servers>"${es-server}"<#if !$isLast()>, </#if></#for>]
+8. My es servers is ["$join(es-servers, '", "')"]
+9. My age is ${age}, not exist key is ${notExist}
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合
 #   说明1：模板中定义的变量名需要符合正在表达式：[a-zA-Z0-9_-]+
 #   说明2：if指令的变量，只有值为"true"的情况下，if指令才会判断为真，其他任何值，都会视为false
 #   说明3：数组变量名是以[]作为后缀，[]内可以指定分隔符，默认分隔符为逗号
-cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true \
+cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true single=false \
   hobbies['|']='run|swim' job="software engineer" es-servers[]='es-1,es-2,es-3'
+
+rm -f freemarker-test.txt
+
 ```
 
 > 上面命令执行后，模板转换后的输出内容如下：
@@ -57,12 +63,22 @@ cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true \
 1. My name is wrj
 2. My job is software engineer
 3. I have a wife, I'm not a single dog
-4. My hobbies is
+4. I have a wife, I'm not a single dog
+5. My hobbies is
    - 0: run
    - 1: swim
-5. My es servers is ["es-1", "es-2", "es-3", ]
-6. My age is 26
+6. My es servers is ["es-1", "es-2", "es-3"]
+7. My es servers is ["es-1", "es-2", "es-3"]
+8. My es servers is ["es-1", "es-2", "es-3"]
+9. My age is 26, not exist key is ${notExist}
+
 ```
+
+从输出结果可以看出：
+
+1. 模板中的${notExist}，由于变量notExist没定义，就不会做任何替换，也不会报错，直接输出
+2. 循环里的if指令，可以使用`$isFirst()`和`$isLast()`内置函数来判断当前元素是否第一个或者最后一个
+2. 可以使用`$join(array, '<separator>')`内置函数实现循环的效果，其中第一个参数是数组变量，第二个参数是分隔符
 
 # 后续支持的功能
 
