@@ -29,7 +29,7 @@ sub main {
     # TODO   len：用于得到数组的长度
     # TODO   isFirst()：当前是否为第一个元素，用于for指令里面的if指令中
     # TODO   isLast()：当前是否为最后一个元素，用于for指令里面的if指令中
-    # convert_func();
+    $yamlText = convert_func($yamlText, %variables);
 
     print $yamlText;
 }
@@ -81,8 +81,9 @@ sub convert_variable {
             $matchStringNew =~ s/\$\{/\$-skip-sign-{/;
         }
         $yamlText = join(
-            $matchStringNew,
+            '',
             substr($yamlText, 0, $matchStringStart),
+            $matchStringNew,
             substr($yamlText, $matchStringEnd, length($yamlText) - $matchStringEnd),
         );
     }
@@ -96,35 +97,26 @@ sub convert_if {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
         my $matchString = $&;
-        my $matchStringNew = $matchString;
 
         my $not = $1;
         my $key = $2;
         my $content = $3;
         # print("not=$not, key=$key, content=$content\n");
-        if (!exists($variables{$key})) {
+        my $ifFlag = 1;
+        if ($key eq "true" || $key eq "false") {
+            $ifFlag = $key eq "true" ? 1 : 0;
+        }
+        elsif (!exists($variables{$key})) {
             print("Error: variable '$key' not defined");
             exit(1);
         }
-        if ($variables{$key} eq "true") {
-            if ($not ne "!") {
-                $matchStringNew = $content;
-            }
-            else {
-                $matchStringNew = "";
-            }
-        }
-        else {
-            if ($not ne "!") {
-                $matchStringNew = "";
-            }
-            else {
-                $matchStringNew = $content;
-            }
-        }
+        $ifFlag = $not eq "!" ? !$ifFlag : $ifFlag;
+        my $matchStringNew = $ifFlag ? $content : "";
+
         $yamlText = join(
-            $matchStringNew,
+            '',
             substr($yamlText, 0, $matchStringStart),
+            $matchStringNew,
             substr($yamlText, $matchStringEnd, length($yamlText) - $matchStringEnd),
         );
     }
@@ -154,17 +146,53 @@ sub convert_for {
         my @dataList = @{$variables{$dataListVarName}};
         for (my $i = 0; $i < @dataList; $i++) {
             my $temp = "$content";
+
             # 必须做一下判断，否则报错：Use of uninitialized value $indexVarName
             if (defined($indexVarName) && $indexVarName) {
                 $temp =~ s/\$\{$indexVarName\}/$i/g;
             }
             $temp =~ s/\$\{$dataVarName\}/$dataList[$i]/g;
+
+            my $isFirst = $i == 0 ? "true" : "false";
+            my $isLast = $i == @dataList - 1 ? "true" : "false";
+            $temp =~ s/\$isFirst\(\)/$isFirst/g;
+            $temp =~ s/\$isLast\(\)/$isLast/g;
+
             $result = "$result$temp";
         }
 
         $yamlText = join(
-            $result,
+            '',
             substr($yamlText, 0, $matchStringStart),
+            $result,
+            substr($yamlText, $matchStringEnd, length($yamlText) - $matchStringEnd),
+        );
+    }
+    return $yamlText;
+}
+
+sub convert_func {
+    my ($yamlText, %variables) = @_;
+
+    # 内置函数join：把数组组装成一个字符串，可以自定义分隔符
+    #             例子：$join(es-servers, ',')
+    while ($yamlText =~ /\$join\(([a-zA-Z0-9_-]+?)[ ]*,[ ]*'(.+?)'[ ]*\)/) {
+        my $matchStringStart = $-[0];
+        my $matchStringEnd = $+[0];
+        my $matchString = $&;
+
+        my $arrayVarName = $1;
+        my $separator = $2;
+        if (!exists($variables{$arrayVarName})) {
+            print("Error: variable '$arrayVarName' not defined");
+            exit(1);
+        }
+        my $matchStringNew = join($separator, @{$variables{$arrayVarName}});
+        print("matchStringNew='$matchStringNew'\n");
+        $yamlText = join(
+            '',
+            substr($yamlText, 0, $matchStringStart),
+            $matchStringNew,
             substr($yamlText, $matchStringEnd, length($yamlText) - $matchStringEnd),
         );
     }
