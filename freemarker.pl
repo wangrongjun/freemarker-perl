@@ -207,6 +207,30 @@ sub convert_func {
             substr($yamlText, $matchStringEnd, length($yamlText) - $matchStringEnd),
         );
     }
+
+    # 内置函数size：获取数组长度
+    # 例子：$size(list)
+    while ($yamlText =~ /\$size\(([a-zA-Z0-9_-]+)\)/) {
+        my $matchStringStart = $-[0];
+        my $matchStringEnd = $+[0];
+        my $matchString = $&;
+
+        my $arrayVarName = $1;
+        if (!exists($variables{$arrayVarName})) {
+            print("Error: variable '$arrayVarName' not defined");
+            exit(1);
+        }
+        my @list = @{$variables{$arrayVarName}};
+        my $size = @list;
+        my $matchStringNew = "$size";
+        $yamlText = join(
+            '',
+            substr($yamlText, 0, $matchStringStart),
+            $matchStringNew,
+            substr($yamlText, $matchStringEnd, length($yamlText) - $matchStringEnd),
+        );
+    }
+
     return $yamlText;
 }
 

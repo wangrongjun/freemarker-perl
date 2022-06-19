@@ -12,7 +12,8 @@ cat >freemarker-test.txt <<'EOF'
 6. My es servers is [<#for es-server in es-servers><#if !$isFirst()>, </#if>"${es-server}"</#for>]
 7. My es servers is [<#for es-server in es-servers>"${es-server}"<#if !$isLast()>, </#if></#for>]
 8. My es servers is ["$join(es-servers, '", "')"]
-9. My age is ${age * 1.1}
+9. My es server count is $size(es-servers)
+10. My age is ${age * 1.1}
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合

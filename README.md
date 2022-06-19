@@ -45,7 +45,8 @@ cat >freemarker-test.txt <<'EOF'
 6. My es servers is [<#for es-server in es-servers><#if !$isFirst()>, </#if>"${es-server}"</#for>]
 7. My es servers is [<#for es-server in es-servers>"${es-server}"<#if !$isLast()>, </#if></#for>]
 8. My es servers is ["$join(es-servers, '", "')"]
-9. My age is ${age * 1.1}
+9. My es server count is $size(es-servers)
+10. My age is ${age * 1.1}
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合
@@ -72,7 +73,8 @@ rm -f freemarker-test.txt
 6. My es servers is ["es-1", "es-2", "es-3"]
 7. My es servers is ["es-1", "es-2", "es-3"]
 8. My es servers is ["es-1", "es-2", "es-3"]
-9. My age is 28.6
+9. My es server count is 3
+10. My age is 28.6
 
 ```
 
@@ -88,7 +90,7 @@ rm -f freemarker-test.txt
 2. if指令支持表达式运算，比如`<#if a==b+c>`
 3. 实现常用的内置函数
     + `floor(i / 2)` - 向下取整
-    + `size(array)` - 获取数组变量的长度
+    + [完成]`size(array)` - 获取数组变量的长度
     + [完成]`isFirst()` - 遍历数组时判断当前的元素是否为第一个元素
     + [完成]`isLast()` - 遍历数组时判断当前的元素是否为最后一个元素
     + [完成]`join(array, '<separator>')` - 把数组join成一个字符串，其中第一个参数是数组变量，第二个参数是分隔符
