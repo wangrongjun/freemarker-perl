@@ -7,12 +7,12 @@ cat >freemarker-test.txt <<'EOF'
 4. I <#if !single>have</#if><#if single>don't have</#if> a wife, I'm <#if !single>not </#if>a single dog
 5. My hobbies is
    <#for i, hobby in hobbies>
-   - ${i}: ${hobby}
+   - ${i+1}: ${hobby}
    </#for>
 6. My es servers is [<#for es-server in es-servers><#if !$isFirst()>, </#if>"${es-server}"</#for>]
 7. My es servers is [<#for es-server in es-servers>"${es-server}"<#if !$isLast()>, </#if></#for>]
 8. My es servers is ["$join(es-servers, '", "')"]
-9. My age is ${age}, not exist key is ${notExist}
+9. My age is ${age * 1.1}
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合

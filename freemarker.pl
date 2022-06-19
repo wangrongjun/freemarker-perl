@@ -14,7 +14,7 @@ sub main {
     }
 
     # 2.从命令行参数获取替换属性
-    my %variables = get_variables();
+    my %variables = get_variables_from_argv();
 
     # 3.处理for（需要同时处理for里面的if，内置函数和变量，因此必须把for循环的处理放在第一步）
     $yamlText = convert_for($yamlText, %variables);
@@ -23,7 +23,7 @@ sub main {
     $yamlText = convert_if($yamlText, %variables);
 
     # 5.处理变量 TODO 支持表达式运算
-    $yamlText = convert_variable($yamlText, %variables);
+    $yamlText = convert_variable($yamlText, \%variables);
 
     # TODO 6.处理内置函数
     # TODO   len：用于得到数组的长度
@@ -34,7 +34,7 @@ sub main {
     print $yamlText;
 }
 
-sub get_variables {
+sub get_variables_from_argv {
     my %variables;
     for (@ARGV) {
         /(.+?)=(.*)/;
@@ -66,24 +66,18 @@ sub get_variables {
 }
 
 sub convert_variable {
-    my ($yamlText, %variables) = @_;
-    while ($yamlText =~ /\$\{([a-zA-Z0-9_]+?)\}/) {
+    my ($yamlText, @variables_list) = @_;
+    while ($yamlText =~ /\$\{([^}]+?)\}/) {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
         my $matchString = $&;
-        my $matchStringNew = $matchString;
-        my $key = $1;
-        if (exists($variables{$key})) {
-            $matchStringNew = $variables{$key};
-        }
-        else {
-            # 如果key不存在，那就先把${xxx}改为一个别的内容，避免while死循环
-            $matchStringNew =~ s/\$\{/\$-skip-sign-{/;
-        }
+        my $express = $1;
+        # print("start convert express '$express'\n");
+        my $replaceValue = calculate_express($express, @variables_list);
         $yamlText = join(
             '',
             substr($yamlText, 0, $matchStringStart),
-            $matchStringNew,
+            $replaceValue,
             substr($yamlText, $matchStringEnd, length($yamlText) - $matchStringEnd),
         );
     }
@@ -158,12 +152,19 @@ sub convert_for {
         for (my $i = 0; $i < @dataList; $i++) {
             my $temp = "$content";
 
-            # 必须做一下判断，否则报错：Use of uninitialized value $indexVarName
+            # 处理变量
+            my %variables_temp;
+            # 必须做一下判断，否则一旦for标签内没使用index变量，会报错：Use of uninitialized value $indexVarName
             if (defined($indexVarName) && $indexVarName) {
-                $temp =~ s/\$\{$indexVarName\}/$i/g;
+                %variables_temp = ("$indexVarName" => "$i", "$dataVarName" => "$dataList[$i]");
             }
-            $temp =~ s/\$\{$dataVarName\}/$dataList[$i]/g;
+            else {
+                %variables_temp = ("$dataVarName" => "$dataList[$i]");
+            }
 
+            $temp = convert_variable($temp, \%variables_temp, \%variables);
+
+            # 处理内置函数：isFirst() 和 isLast()
             my $isFirst = $i == 0 ? "true" : "false";
             my $isLast = $i == @dataList - 1 ? "true" : "false";
             $temp =~ s/\$isFirst\(\)/$isFirst/g;
@@ -207,4 +208,70 @@ sub convert_func {
         );
     }
     return $yamlText;
+}
+
+sub calculate_express {
+    my ($express, @variables_list) = @_;
+    $express = trim($express);
+    my $itemRegex = '[a-z|A-Z|0-9|_|-|\.]+';
+    if ($express =~ /^($itemRegex)[ ]*==[ ]*($itemRegex)$/) {
+        # TODO 处理 == 比较符
+        my $left_item = $1;
+        my $right_item = $2;
+    }
+    elsif ($express =~ /^($itemRegex)[ ]*!=[ ]*($itemRegex)$/) {
+        # TODO 处理 != 比较符
+        my $left_item = $1;
+        my $right_item = $2;
+    }
+    elsif ($express =~ /^($itemRegex)[ ]*([+|-|*|\/])[ ]*($itemRegex)$/) {
+        # 处理 加减乘除
+        my $left_item = $1;
+        my $sign = $2;
+        my $right_item = $3;
+        if ($left_item =~ /[a-zA-Z]/) {
+            my $value = find_value_from_hash_list($left_item, @variables_list);
+            if ($value eq "not exist") {
+                print("key '$left_item' not exist-1\n");
+                exit 1;
+            }
+            $left_item = $value;
+        }
+        if ($right_item =~ /[a-zA-Z]/) {
+            my $value = find_value_from_hash_list($right_item, @variables_list);
+            if ($value eq "not exist") {
+                print("key '$right_item' not exist-2\n");
+                exit 1;
+            }
+            $right_item = $value;
+        }
+        return eval("$left_item $sign $right_item")
+    }
+    else {
+        my $value = find_value_from_hash_list($express, @variables_list);
+        if ($value eq "not exist") {
+            print("key '$express' not exist-3\n");
+            exit 1;
+        }
+        return $value;
+    }
+}
+
+sub trim {
+    my $string = $_[0];
+    $string =~ s/^\s+//;
+    $string =~ s/\s+$//;
+    return $string;
+}
+
+# 指定一个key，按顺序从多个hash对象中寻找对应的value。如果key不存在，会返回字符串：'not exist'
+sub find_value_from_hash_list {
+    my ($key, @hash_list) = @_;
+    for my $hash_ref (@hash_list) {
+        my %hash = %{$hash_ref};
+        if (exists($hash{$key})) {
+            return $hash{$key};
+        }
+    }
+    return 'not exist';
 }

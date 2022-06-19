@@ -12,6 +12,8 @@
 2. 条件判断，通过`<#if>`指令实现，详情见下面的例子
 3. 循环，通过`<#for>`指令实现，详情见下面的例子
 
+Github地址：[GitHub - wangrongjun/freemarker-perl: FreeMarker for Perl](https://github.com/wangrongjun/freemarker-perl)
+
 # 背景
 
 在日常的运维工作中，需要编写许多的系统部署脚本，其中不同的环境，或者不同的节点，都可能需要不同的配置项。在部署脚本中就体现为需要准备不同的配置文件。
@@ -20,7 +22,7 @@
 
 因此决定编写配置文件模板，然后使用模板引擎来解释。通过研究，Java的FreeMarker能满足需求。但是使用FreeMarker就需要准备Java运行时环境，很不方便。
 
-于是研究如何能不需要准备任何环境就能使用模板引擎，后来发现公司的Linux服务器（centos:7.6.1810）默认自带Perl-5，而且Perl对正则表达式的支持比较好。
+于是研究如何能不需要准备任何环境就能使用模板引擎，后来发现公司的Linux服务器（centos:7.6）默认自带Perl-5，而且Perl对正则表达式的支持比较好。
 
 最后决定，使用Perl来开发模板引擎，以实现Java平台上FreeMarker的模板引擎功能。
 
@@ -38,12 +40,12 @@ cat >freemarker-test.txt <<'EOF'
 4. I <#if !single>have</#if><#if single>don't have</#if> a wife, I'm <#if !single>not </#if>a single dog
 5. My hobbies is
    <#for i, hobby in hobbies>
-   - ${i}: ${hobby}
+   - ${i+1}: ${hobby}
    </#for>
 6. My es servers is [<#for es-server in es-servers><#if !$isFirst()>, </#if>"${es-server}"</#for>]
 7. My es servers is [<#for es-server in es-servers>"${es-server}"<#if !$isLast()>, </#if></#for>]
 8. My es servers is ["$join(es-servers, '", "')"]
-9. My age is ${age}, not exist key is ${notExist}
+9. My age is ${age * 1.1}
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合
@@ -65,12 +67,12 @@ rm -f freemarker-test.txt
 3. I have a wife, I'm not a single dog
 4. I have a wife, I'm not a single dog
 5. My hobbies is
-   - 0: run
-   - 1: swim
+   - 1: run
+   - 2: swim
 6. My es servers is ["es-1", "es-2", "es-3"]
 7. My es servers is ["es-1", "es-2", "es-3"]
 8. My es servers is ["es-1", "es-2", "es-3"]
-9. My age is 26, not exist key is ${notExist}
+9. My age is 28.6
 
 ```
 
@@ -82,7 +84,12 @@ rm -f freemarker-test.txt
 
 # 后续支持的功能
 
-1. `${}`和`<#if>`支持表达式运算，比如`${i+1}`和`<#if a==b+c>`
-2. 实现常用的内置函数，比如实现`len(array)`来支持获取数组变量的长度，`isFirst()`和`isLast()`来遍历数组时判断当前的元素是否为第一个/最后一个元素
-3. 允许通过指定yaml/json文件来提供变量集合
-4. 目前还不支持指令嵌套，即for指令里面有if指令，if指令里面有for指令，if指令里面有if指令。后续会支持
+1. [完成]`${xxx}`支持表达式运算，比如`${i+1}`
+2. `<#if>`支持表达式运算，比如`<#if a==b+c>`
+3. 实现常用的内置函数
+    + `size(array)` - 获取数组变量的长度
+    + [完成]`isFirst()` - 遍历数组时判断当前的元素是否为第一个元素
+    + [完成]`isLast()` - 遍历数组时判断当前的元素是否为最后一个元素
+    + [完成]`join(array, '<separator>')` - 把数组join成一个字符串，其中第一个参数是数组变量，第二个参数是分隔符
+4. 允许通过指定yaml/json文件来提供变量集合
+5. 目前还不支持指令嵌套，即for指令里面有if指令，if指令里面有for指令，if指令里面有if指令。后续会支持
