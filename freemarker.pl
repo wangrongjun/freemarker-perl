@@ -25,11 +25,11 @@ sub main {
     # 5.处理变量 TODO 支持表达式运算
     $yamlText = convert_variable($yamlText, \%variables);
 
-    # TODO 6.处理内置函数
-    # TODO   len：用于得到数组的长度
-    # TODO   isFirst()：当前是否为第一个元素，用于for指令里面的if指令中
-    # TODO   isLast()：当前是否为最后一个元素，用于for指令里面的if指令中
+    # 6.处理内置函数
     $yamlText = convert_func($yamlText, %variables);
+
+    # 7.去掉转义符
+    $yamlText =~ s/\\\$\{/\${/g;
 
     print $yamlText;
 }
@@ -67,7 +67,7 @@ sub get_variables_from_argv {
 
 sub convert_variable {
     my ($yamlText, @variables_list) = @_;
-    while ($yamlText =~ /\$\{([^}]+?)\}/) {
+    while ($yamlText =~ /(?<!\\)\$\{([^}]+?)\}/) {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
         my $matchString = $&;
@@ -87,25 +87,49 @@ sub convert_variable {
 
 sub convert_if {
     my ($yamlText, %variables) = @_;
-    while ($yamlText =~ /<#if ([!]?)([a-zA-Z0-9_-]+?)>((.|\n)*?)<\/#if>/) {
+    while ($yamlText =~ /<#if ([!]?)([a-zA-Z0-9_-]+?)(([!|=])="(.+?)")?>((.|\n)*?)<\/#if>/) {
         my $matchStringStart = $-[0];
         my $matchStringEnd = $+[0];
         my $matchString = $&;
 
         my $not = $1;
         my $key = $2;
-        my $content = $3;
+        my $equalSign = $4;
+        my $equalValue = $5;
+        my $content = $6;
         # print("not=$not, key=$key, content=$content\n");
         my $ifFlag = "true";
         if ($key eq "true" || $key eq "false") {
             $ifFlag = $key;
         }
         elsif (!exists($variables{$key})) {
-            print("Error: variable '$key' not defined");
+            print(STDERR "Error: variable '$key' not defined");
             exit(1);
         }
         else {
-            $ifFlag = $variables{$key};
+            # 处理判断表达式有 == 或者 != 的情况
+            if (defined($equalValue)) {
+                if ($equalSign eq "=") {
+                    if ($variables{$key} eq $equalValue) {
+                        $ifFlag = "true";
+                    }
+                    else {
+                        $ifFlag = "false";
+                    }
+                }
+                else {
+                    if ($variables{$key} eq $equalValue) {
+                        $ifFlag = "false";
+                    }
+                    else {
+                        $ifFlag = "true";
+                    }
+                }
+            }
+            # 处理判断表达式只有一个变量的情况
+            else { # 处理判断表达式只有一个变量的情况
+                $ifFlag = $variables{$key};
+            }
         }
         # 处理非逻辑
         if ($not eq "!") {
@@ -143,7 +167,7 @@ sub convert_for {
 
         # 判断数组列表的变量名是否有定义
         if (!exists($variables{$dataListVarName})) {
-            print("Error: variable '$dataListVarName' not defined");
+            print(STDERR "Error: variable '$dataListVarName' not defined");
             exit(1);
         }
 
@@ -196,7 +220,7 @@ sub convert_func {
         my $arrayVarName = $1;
         my $separator = $2;
         if (!exists($variables{$arrayVarName})) {
-            print("Error: variable '$arrayVarName' not defined");
+            print(STDERR "Error: variable '$arrayVarName' not defined");
             exit(1);
         }
         my $matchStringNew = join($separator, @{$variables{$arrayVarName}});
@@ -217,7 +241,7 @@ sub convert_func {
 
         my $arrayVarName = $1;
         if (!exists($variables{$arrayVarName})) {
-            print("Error: variable '$arrayVarName' not defined");
+            print(STDERR "Error: variable '$arrayVarName' not defined");
             exit(1);
         }
         my @list = @{$variables{$arrayVarName}};
@@ -256,16 +280,16 @@ sub calculate_express {
         if ($left_item =~ /[a-zA-Z]/) {
             my $value = find_value_from_hash_list($left_item, @variables_list);
             if ($value eq "not exist") {
-                print("key '$left_item' not exist-1\n");
-                exit 1;
+                print(STDERR "Error: key '$left_item' not exist\n");
+                exit(1);
             }
             $left_item = $value;
         }
         if ($right_item =~ /[a-zA-Z]/) {
             my $value = find_value_from_hash_list($right_item, @variables_list);
             if ($value eq "not exist") {
-                print("key '$right_item' not exist-2\n");
-                exit 1;
+                print(STDERR "Error: key '$right_item' not exist\n");
+                exit(1);
             }
             $right_item = $value;
         }
@@ -274,8 +298,8 @@ sub calculate_express {
     else {
         my $value = find_value_from_hash_list($express, @variables_list);
         if ($value eq "not exist") {
-            print("key '$express' not exist-3\n");
-            exit 1;
+            print(STDERR "Error: key '$express' not exist\n");
+            exit(1);
         }
         return $value;
     }

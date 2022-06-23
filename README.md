@@ -47,14 +47,19 @@ cat >freemarker-test.txt <<'EOF'
 8. My es servers is ["$join(es-servers, '", "')"]
 9. My es server count is $size(es-servers)
 10. My age is ${age * 1.1}
+11. age variable is show as \${age}
+12. <#if name=="wrj">name=="wrj"</#if>
+13. <#if name=="qjy">name=="qjy"</#if>
+14. <#if name!="wrj">name!="wrj"</#if>
+15. <#if name!="qjy">name!="qjy"</#if>
 EOF
 
 # 从管道接收模板内容，并且通过参数来定义模板中需要替换的变量集合
 #   说明1：模板中定义的变量名需要符合正在表达式：[a-zA-Z0-9_-]+
-#   说明2：if指令的变量，只有值为"true"的情况下，if指令才会判断为真，其他任何值，都会视为false
+#   说明2：if指令的判断表达式可以是一个变量，也可以是一个包含==或者!=的比较公式。如果是变量，只有值为"true"的情况下，会判断为真，其他任何值，都会视为false
 #   说明3：数组变量名是以[]作为后缀，[]内可以指定分隔符，默认分隔符为逗号
-cat freemarker-test.txt | ./freemarker.pl name=wrj age=26 marry=true single=false \
-  hobbies['|']='run|swim' job="software engineer" es-servers[]='es-1,es-2,es-3'
+PARAMS="name=wrj age=26 marry=true single=false hobbies[|]=run|swim job=software-engineer es-servers[]=es-1,es-2,es-3"
+cat freemarker-test.txt | ./freemarker.pl ${PARAMS}
 
 rm -f freemarker-test.txt
 
@@ -64,7 +69,7 @@ rm -f freemarker-test.txt
 
 ```
 1. My name is wrj
-2. My job is software engineer
+2. My job is software-engineer
 3. I have a wife, I'm not a single dog
 4. I have a wife, I'm not a single dog
 5. My hobbies is
@@ -75,6 +80,11 @@ rm -f freemarker-test.txt
 8. My es servers is ["es-1", "es-2", "es-3"]
 9. My es server count is 3
 10. My age is 28.6
+11. age variable is show as ${age}
+12. name=="wrj"
+13.
+14.
+14. name!="qjy"
 
 ```
 
@@ -82,7 +92,8 @@ rm -f freemarker-test.txt
 
 1. 模板中可以使用表达式，比如`${i+1}`，`${age * 1.1}`
 2. 循环里的if指令，可以使用`$isFirst()`和`$isLast()`内置函数来判断当前元素是否第一个或者最后一个
-2. 可以使用`$join(array, '<separator>')`内置函数实现循环的效果，其中第一个参数是数组变量，第二个参数是分隔符
+3. 可以使用`$join(array, '<separator>')`内置函数实现循环的效果，其中第一个参数是数组变量，第二个参数是分隔符
+4. 如果不想被替换变量，可以在$前面加上反斜杠，变成：`\${xxx}`
 
 # 后续支持的功能
 
