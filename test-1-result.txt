@@ -1,0 +1,22 @@
+1. My name is wrj
+2. My job is software-engineer
+3. I have a wife, I'm not a single dog
+4. I have a wife, I'm not a single dog
+5. My hobbies is
+    - 1: run
+    - 2: swim
+6. My es servers is ["es-1", "es-2", "es-3"]
+7. My es servers is ["es-1", "es-2", "es-3"]
+8. My es servers is ["es-1", "es-2", "es-3"]
+9. My es server count is 3
+10. My age is 28.6
+11. age variable is show as ${age}
+12. name=="wrj"
+    
+    
+    name!="qjy"
+13. 测试if指令里面嵌套for指令
+    - 1: run
+    - 2: swim
+---
+test end.

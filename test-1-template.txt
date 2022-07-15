@@ -1,0 +1,31 @@
+1. My name is ${name}
+2. My job is ${job}
+3. I <#if marry>have</#if><#if !marry>don't have</#if> a wife, I'm <#if marry>not </#if>a single dog
+4. I <#if !single>have</#if><#if single>don't have</#if> a wife, I'm <#if !single>not </#if>a single dog
+5. My hobbies is
+    <#for i, hobby in hobbies>
+    - ${i+1}: ${hobby}
+    </#for>
+6. My es servers is [<#for es-server in es-servers><#if !$isFirst()>, </#if>"${es-server}"</#for>]
+7. My es servers is [<#for es-server in es-servers>"${es-server}"<#if !$isLast()>, </#if></#for>]
+8. My es servers is ["$join(es-servers, '", "')"]
+9. My es server count is $size(es-servers)
+10. My age is ${age * 1.1}
+11. age variable is show as \${age}
+12. <#if name=="wrj">name=="wrj"</#if>
+    <#if name=="qjy">name=="qjy"</#if>
+    <#if name!="wrj">name!="wrj"</#if>
+    <#if name!="qjy">name!="qjy"</#if>
+13. 测试if指令里面嵌套for指令
+<#if name=="wrj">
+    <#for i, hobby in hobbies>
+    - ${i+1}: ${hobby}
+    </#for>
+</#if>
+---
+<#if name!="wrj">
+    <#for i, hobby in hobbies>
+    - ${i+1}: ${hobby}
+    </#for>
+</#if>
+test end.
